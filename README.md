@@ -48,7 +48,7 @@ source .venv/bin/activate      # Linux/Mac
 .venv\Scripts\activate         # Windows
 ```
 
-### 3. Instale as dependências
+3. Instale as dependências
 
 ```bash
 pip install -r requirements.txt
@@ -81,3 +81,5 @@ python weather_client.py
 * Os dados são armazenados no Redis com  **expiração de 60 segundos** .
 * Ao consultar uma cidade, o sistema verifica se ela já está no cache antes de chamar a API.
 * A resposta é simplificada para conter apenas informações relevantes: endereço, data, temperatura máxima e mínima.
+
+### Link: https://roadmap.sh/projects/weather-api-wrapper-service
