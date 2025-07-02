@@ -2,6 +2,8 @@ import requests
 
 from config import WEATHER_KEY
 
+import urllib.parse
+
 
 class WeatherClient:
 
@@ -11,15 +13,42 @@ class WeatherClient:
 
     def get_weather(self,location: str):
         
-        endpoint = f'{self._BASE_URL}/{location}?key={self._weather_key}'
+        location_cleaned = urllib.parse.quote(location)
+        
+        endpoint = f'{self._BASE_URL}/{location_cleaned}?key={self._weather_key}&unitGroup=metric'
 
         response = requests.get(endpoint)
         
         if response.status_code == 200:
-            data = response.json()
+            return response.json()
+        else:
+            return response.raise_for_status()
         
+class WeatherService:
+
+    def __init__(self, client: WeatherClient):
+        self.client = client
+
+    def get_location_temperature(self,location: str):
+        data = self.client.get_weather(location)
+        address = data['resolvedAddress']
+        today = data['days'][0]['datetime']
+        temp_max = data['days'][0]['tempmax']
+        temp_min = data['days'][0]['tempmin']
+
+        return {
+            'address' : address,
+            'today' : today,
+            'temp_max' : temp_max,
+            'temp_min' : temp_min
+        }
+    
+class RedisCache:
+    # Escrever comandos basicos do redis aqui e interação entre redis e service no weatherservice
+    pass
+    
 
 if __name__ == '__main__': 
     client = WeatherClient()
-    client.get_weather('london')
-
+    a = client.get_weather('vila velha')
+    print(a)
