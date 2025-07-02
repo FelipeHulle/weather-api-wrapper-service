@@ -1,26 +1,83 @@
-# weather-api-wrapper-service
+# Weather Client com Redis Cache
 
-
-In this project, instead of relying on our own weather data, we will build a weather API that fetches and returns weather data from a 3rd party API. This project will help you understand how to work with 3rd party APIs, caching, and environment variables.
-
-![Weather API](https://assets.roadmap.sh/guest/weather-api-f8i1q.png)
-
-As for the actual weather API to use, you can use your favorite one, as a suggestion, here is a link to [Visual Crossing’s API](https://www.visualcrossing.com/weather-api), it’s completely FREE and easy to use.
-
-Regarding the in-memory cache, a pretty common recommendation is to use [Redis](https://redis.io/), you can read more about it [here](https://redis.io/docs/latest/develop/clients/client-side-caching/), and as a recommendation, you could use the city code entered by the user as the key, and save there the result from calling the API.
-
-At the same time, when you “set” the value in the cache, you can also give it an expiration time in seconds (using the `EX` flag on the `SET` command). That way the cache (the keys) will automatically clean itself when the data is old enough (for example, giving it a 12-hours expiration time).
+Este projeto tem como objetivo consumir dados de uma **API de clima** (Visual Crossing Weather API), com suporte a **cache utilizando Redis**. A solução permite que informações meteorológicas sejam armazenadas temporariamente para evitar chamadas repetitivas à API, otimizando o desempenho da aplicação.
 
 ---
 
-## Some Tips
+## 🔧 Tecnologias Utilizadas
 
-Here are some tips to help you get started:
+- Python 3.13
+- [Visual Crossing Weather API](https://www.visualcrossing.com/weather-api)
+- Redis
+- Docker
+- `requests`
+- `redis-py`
+- Variáveis de ambiente com `.env`
 
-* Start by creating a simple API that returns a hardcoded weather response. This will help you understand how to structure your API and how to handle requests.
-* Use environment variables to store the API key and the Redis connection string. This way, you can easily change them without having to modify your code.
-* Make sure to handle errors properly. If the 3rd party API is down, or if the city code is invalid, make sure to return the appropriate error message.
-* Use some package or module to make HTTP requests e.g. if you are using Node.js, you can use the `axios` package, if you are using Python, you can use the `requests` module.
-* Implement rate limiting to prevent abuse of your API. You can use a package like `express-rate-limit` if you are using Node.js or `flask-limiter` if you are using Python.
+---
 
-This project will help you understand how to work with 3rd party APIs, caching, and environment variables. It will also help you understand how to structure your API and how to handle requests.
+## 📁 Estrutura de Arquivos
+
+```bash
+├── .venv/               # Ambiente virtual
+├── .env.example         # Exemplo de .env
+├── .gitignore
+├── app.py               # (Ponto de entrada opcional)
+├── config.py            # Configurações (API Key, Redis)
+├── weather_client.py    # Cliente de API + cache Redis
+├── requirements.txt     # Dependências
+└── README.md            # Este arquivo
+```
+
+---
+
+## 🚀 Instalação e Execução
+
+### 1. Clone o projeto
+
+```bash
+git clone https://github.com/seu-usuario/weather-redis-client.git
+cd weather-redis-client
+```
+
+### 2. Crie um ambiente virtual
+
+```bash
+python -m venv .venv
+source .venv/bin/activate      # Linux/Mac
+.venv\Scripts\activate         # Windows
+```
+
+### 3. Instale as dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Suba o Redis com Docker
+
+```bash
+docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
+```
+
+> Isso executará uma instância do Redis com RedisInsight (interface web em `http://localhost:8001`).
+
+### 5. Configure o .env
+
+```bash
+WEATHER_KEY=your_weather_api_key
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+### 6. Execute o script principal
+
+```bash
+python weather_client.py
+```
+
+## 💡 Detalhes Técnicos
+
+* Os dados são armazenados no Redis com  **expiração de 60 segundos** .
+* Ao consultar uma cidade, o sistema verifica se ela já está no cache antes de chamar a API.
+* A resposta é simplificada para conter apenas informações relevantes: endereço, data, temperatura máxima e mínima.
