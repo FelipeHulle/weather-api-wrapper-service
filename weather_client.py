@@ -1,7 +1,9 @@
+#%%
 import requests
+import redis
 
-from config import WEATHER_KEY
-
+import json 
+from config import WEATHER_KEY,host_redis,port_redis
 import urllib.parse
 
 
@@ -24,31 +26,63 @@ class WeatherClient:
         else:
             return response.raise_for_status()
         
-class WeatherService:
-
-    def __init__(self, client: WeatherClient):
-        self.client = client
-
-    def get_location_temperature(self,location: str):
-        data = self.client.get_weather(location)
-        address = data['resolvedAddress']
-        today = data['days'][0]['datetime']
-        temp_max = data['days'][0]['tempmax']
-        temp_min = data['days'][0]['tempmin']
-
-        return {
-            'address' : address,
-            'today' : today,
-            'temp_max' : temp_max,
-            'temp_min' : temp_min
-        }
-    
 class RedisCache:
     # Escrever comandos basicos do redis aqui e interação entre redis e service no weatherservice
-    pass
-    
+    def __init__(self):
+        self._pool = redis.ConnectionPool(host=host_redis,port=port_redis,db=0)
+        self._redis = redis.Redis(connection_pool=self._pool)
 
+    def set_data(self,key,value):
+        self._redis.set(key, value, ex=60, nx=True)
+        
+    def get_data(self,key):
+        data = self._redis.get(key)
+        data_json = json.loads(data)
+        return data_json
+    
+    def exists_key(self,key):
+        response = self._redis.exists(key)
+        return response
+    
+class WeatherService:
+
+    def __init__(self, client: WeatherClient = WeatherClient(), cache: RedisCache = RedisCache()):
+        self.client = client
+        self.cache = cache
+
+    def get_location_temperature(self,location: str):
+
+        if self.cache.exists_key(location):
+            return self.cache.get_data(location)
+        else:
+            data = self.client.get_weather(location)
+            address = data['resolvedAddress']
+            today = data['days'][0]['datetime']
+            temp_max = data['days'][0]['tempmax']
+            temp_min = data['days'][0]['tempmin']
+
+            data_json = {
+                'address' : address,
+                'today' : today,
+                'temp_max' : temp_max,
+                'temp_min' : temp_min
+            }
+
+            self.cache.set_data(location,json.dumps(data_json))
+
+            return self.cache.get_data(location)
+
+        
+#%%
 if __name__ == '__main__': 
-    client = WeatherClient()
-    a = client.get_weather('vila velha')
-    print(a)
+
+    # cache = WeatherService(WeatherClient(),RedisCache())
+    # data = cache.get_location('london')
+    # print(data)
+
+    client = WeatherService(WeatherClient(),RedisCache())
+    
+    data = client.get_location_temperature('vila velha')
+    print(data)
+    # a = client.get_weather('vila velha')
+    # print(a)
