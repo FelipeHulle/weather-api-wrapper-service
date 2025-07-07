@@ -73,7 +73,7 @@ REDIS_PORT=6379
 ### 6. Execute o script principal
 
 ```bash
-python weather_client.py
+python app.py
 ```
 
 ## 💡 Detalhes Técnicos
